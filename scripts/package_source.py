@@ -8,7 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED = {".git", "inputs", "outputs", "cache", "dist", "__pycache__", ".pytest_cache",
             ".ipynb_checkpoints", ".venv", "venv", "env", "tmp", ".idea", ".vscode", "node_modules"}
-SUFFIXES = {".pyc", ".pyo", ".log", ".pt", ".pth", ".safetensors", ".npz", ".blend"}
+SUFFIXES = {".pyc", ".pyo", ".log", ".pt", ".pth", ".safetensors", ".npz", ".blend",
+            ".pem", ".key", ".p12", ".pfx"}
 
 
 def main():
@@ -25,6 +26,8 @@ def main():
         if path == output or path.suffix in SUFFIXES or path.name.startswith(".env") or path.name == "cache-before-install.txt":
             continue
         if path.name.endswith(".review.json"):
+            continue
+        if path.name in {".netrc", ".pypirc", "credentials.json", "secrets.json"} or path.name.startswith(("id_rsa", "id_ed25519")) or path.name.endswith(".local.json"):
             continue
         data = path.read_bytes()
         if path.suffix in (".py", ".md", ".json", ".sh", ".txt", ".ipynb"):

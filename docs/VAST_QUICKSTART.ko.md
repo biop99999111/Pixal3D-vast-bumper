@@ -1,5 +1,13 @@
 # Vast.ai Jupyter 시작 가이드
 
+## 5090 고품질 첫 실행
+
+노트북의 손상 렌더 단계는 `configs/vast/render_high_quality.json`을 사용한다.
+CUDA / Cycles / 1024×1024 / 128 samples로 정상·찌그러짐·찍힘·긁힘 각 1장, 총 4장을 먼저 생성한다.
+이 설정은 실행 준비용이며 실제 5090에서의 시간·VRAM·품질 검증은 아직 필요하다.
+4장과 라벨을 확인한 후 설정 파일의 `count`를 늘리고 새 출력 폴더를 지정한다.
+기존 `render.json`의 CPU·768px·32 samples 설정은 로컬 시험용으로 유지한다.
+
 ## 실행 흐름
 
 공개 GitHub 저장소 → Vast.ai Jupyter 터미널에서 clone → 의존성 설치 → 모델 준비 → 범퍼 생성·검수 → 손상·RGB·마스크·YOLO 데이터.

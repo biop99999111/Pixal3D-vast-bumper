@@ -43,7 +43,7 @@ def safe_error(error):
 
 def source_digest():
     files = list((ROOT / "bumper_synth").glob("*.py"))
-    files += [ROOT / "inference.py", ROOT / "pixal3d/pipelines/pixal3d_image_to_3d.py"]
+    files += [ROOT / "inference.py", *list((ROOT / "pixal3d").rglob("*.py"))]
     return object_digest({str(p.relative_to(ROOT)): digest(p) for p in sorted(files)})
 
 

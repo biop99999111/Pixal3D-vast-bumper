@@ -1,0 +1,67 @@
+{
+  "kind": "render",
+  "seed": 42,
+  "count": 4,
+  "resolution": 1024,
+  "samples": 128,
+  "device": "CUDA",
+  "engine": "CYCLES",
+  "front_axis": "-Y",
+  "rotation_degrees": [
+    0,
+    0,
+    0
+  ],
+  "views_degrees": [
+    -15,
+    0,
+    15
+  ],
+  "elevation_degrees": [
+    -5,
+    5
+  ],
+  "normal_fraction": 0.25,
+  "classes": [
+    0,
+    1,
+    2
+  ],
+  "max_attempts": 8,
+  "min_mask_pixels": 16,
+  "min_mask_side": 2,
+  "min_damage_mean_delta": 1.0,
+  "damage": {
+    "dent": {
+      "radius": [
+        0.08,
+        0.15
+      ],
+      "depth": [
+        0.008,
+        0.025
+      ]
+    },
+    "ding": {
+      "radius": [
+        0.02,
+        0.045
+      ],
+      "depth": [
+        0.004,
+        0.012
+      ]
+    },
+    "scratch": {
+      "length": [
+        0.08,
+        0.2
+      ],
+      "width": [
+        0.003,
+        0.009
+      ]
+    }
+  },
+  "notes": "GPU quality pilot: one normal plus dent/ding/scratch, 1024px and 128 Cycles samples. Verify appearance and time before increasing count. Damage units are relative, not millimetres."
+}

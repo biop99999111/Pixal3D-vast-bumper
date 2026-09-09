@@ -105,8 +105,7 @@ code("""if not accepted.value or not note.value.strip():
 run_cmd(sys.executable,'-m','bumper_synth','review','--asset',run_dir/'bumper.glb','--note',note.value)
 """),
 md("## 8. 손상·RGB·YOLO 라벨 생성\n초기에는 소량 생성 후 미리보기를 확인하세요. `dent/딩(ding)/scratch`는 0/1/2입니다. 찍힘의 업무 정의는 실제 사진과 맞춰야 합니다."),
-code("""render_cfg = read_json('configs/vast/render.json')
-render_cfg.update(count=12,device='CUDA',resolution=768,samples=32)
+code("""render_cfg = read_json('configs/vast/render_high_quality.json')
 write_json('outputs/current_render.json',render_cfg)
 dataset_dir = ROOT/'outputs'/'dataset_bumper_001'
 run_cmd(sys.executable,'-m','bumper_synth','render','--asset',run_dir/'bumper.glb',
@@ -137,6 +136,8 @@ md("""## 선택 기능
 ]
 nb.metadata = {"kernelspec":{"display_name":"Pixal3D Vast","language":"python","name":"pixal3d-vast"},
                "language_info":{"name":"python"}}
+for index, cell in enumerate(nb.cells):
+    cell["id"] = f"workspace-{index:02d}"
 target=ROOT/'notebooks/workspace.ipynb'
 target.parent.mkdir(exist_ok=True)
 nbf.write(nb,target)
