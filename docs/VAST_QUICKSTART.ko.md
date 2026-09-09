@@ -1,5 +1,19 @@
 # Vast.ai Jupyter 시작 가이드
 
+## utils3d.__version__ 환경 검사 오류
+
+`No module named 'utils3d.__version__'`는 지연 로딩 패키지의 버전 속성을
+조회하던 검사 코드의 오류였다. 버전은 패키지 메타데이터로 조회하도록 수정했다.
+이미 설치와 CUDA 검사가 끝났다면 재빌드 없이 검사만 실행한다.
+
+```bash
+git pull --ff-only
+ATTN_BACKEND=sdpa python scripts/check_environment.py --gpu-smoke
+```
+
+5090 서버에서 Torch 2.11.0+cu128, NATTEN 0.21.0의 SDPA·NATTEN·nvdiffrast
+CUDA 검사는 통과한 로그를 확인했다. 전체 모델 추론과 GLB export는 별도 검증이 필요하다.
+
 ## NATTEN 설치 중 compute_1200 오류가 난 경우
 
 이전 스크립트에서 compute capability `(12, 0)`을 `120`으로 전달하는 오류가 있었다.

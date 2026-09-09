@@ -13,6 +13,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from bumper_synth.common import safe_error, write_json
 
 
+def module_version(obj, module):
+    # Lazy packages may interpret __version__ as a submodule import. Reading
+    # the namespace directly avoids invoking their module-level __getattr__.
+    version = vars(obj).get("__version__")
+    if version is not None:
+        return str(version)
+    distribution = {"PIL": "Pillow", "nvdiffrast.torch": "nvdiffrast"}.get(module, module)
+    try:
+        return importlib.metadata.version(distribution)
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu-smoke", action="store_true")
@@ -25,7 +38,7 @@ def main():
                    "nvdiffrast.torch", "transformers", "moge", "utils3d", "PIL"):
         try:
             obj = importlib.import_module(module)
-            result["modules"][module] = {"ok": True, "version": getattr(obj, "__version__", "unknown")}
+            result["modules"][module] = {"ok": True, "version": module_version(obj, module)}
         except Exception as error:
             result["modules"][module] = {"ok": False, "error": safe_error(error)}
             failed = True
