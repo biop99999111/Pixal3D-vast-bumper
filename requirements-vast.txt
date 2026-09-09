@@ -1,5 +1,7 @@
 # Lightweight orchestration additions. GPU dependencies are installed by setup_vast.sh.
 numpy>=1.26,<3
+# Required by NAF loaded through torch.hub (its imports are not installed by pip).
+einops==0.8.1
 pillow>=11
 trimesh>=4.11
 huggingface-hub>=0.34,<1

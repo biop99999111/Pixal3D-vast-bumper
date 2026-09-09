@@ -35,7 +35,7 @@ def main():
               "free_disk_bytes": shutil.disk_usage(Path.cwd()).free, "modules": {}, "checks": {}}
     failed = False
     for module in ("torch", "torchvision", "natten", "cumesh", "o_voxel", "flex_gemm",
-                   "nvdiffrast.torch", "transformers", "moge", "utils3d", "PIL"):
+                   "nvdiffrast.torch", "transformers", "moge", "utils3d", "einops", "PIL"):
         try:
             obj = importlib.import_module(module)
             result["modules"][module] = {"ok": True, "version": module_version(obj, module)}
