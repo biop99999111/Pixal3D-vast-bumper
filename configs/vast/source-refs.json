@@ -1,0 +1,8 @@
+{
+  "trellis2": "75fbf0183001ed9876c8dbb35de6b68552ee08bd",
+  "cumesh": "12289e1062f0603f2f0d0771b02e1395d247f26f",
+  "flexgemm": "6dd94a859c26ee8246888502eada3dd8ad85532e",
+  "moge": "74fbce054ebed49800de42d0ad0e83495065719a",
+  "naf": "37f2dfc180f2de53d98bd601109c0da0dd6b0f43",
+  "nvdiffrast": "v0.4.0"
+}

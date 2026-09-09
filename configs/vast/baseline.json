@@ -1,0 +1,18 @@
+{
+  "kind": "inference",
+  "model_path": "TencentARC/Pixal3D",
+  "background_mode": "provided_mask",
+  "padding": 1.1,
+  "low_vram": false,
+  "resolution": 1536,
+  "seed": 42,
+  "attention_backend": "sdpa",
+  "manual_fov": -1,
+  "max_num_tokens": 49152,
+  "samplers": {
+    "ss": {"steps": 12, "guidance_strength": 7.5, "guidance_rescale": 0.7, "rescale_t": 5.0},
+    "shape": {"steps": 12, "guidance_strength": 7.5, "guidance_rescale": 0.5, "rescale_t": 3.0},
+    "texture": {"steps": 12, "guidance_strength": 1.0, "guidance_rescale": 0.0, "rescale_t": 3.0}
+  },
+  "export": {"texture_size": 4096, "decimation_target": 1000000, "remesh": true, "webp": false}
+}

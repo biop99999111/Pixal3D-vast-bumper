@@ -1,0 +1,7 @@
+{
+  "name": "pixal3d-bumper-validation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optional Khronos glTF validation for generated assets",
+  "dependencies": {"gltf-validator": "2.0.0-dev.3.10"}
+}

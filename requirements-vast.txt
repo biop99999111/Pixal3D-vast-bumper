@@ -1,0 +1,9 @@
+# Lightweight orchestration additions. GPU dependencies are installed by setup_vast.sh.
+numpy>=1.26,<3
+pillow>=11
+trimesh>=4.11
+huggingface-hub>=0.34,<1
+ipykernel>=6.29,<8
+ipywidgets>=8,<9
+nbformat>=5,<6
+pytest>=8,<10

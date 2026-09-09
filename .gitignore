@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Output files
+output.glb
+autotune_cache.json
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+tmp
+
+# Local experiments, credentials, model caches, and private company inputs
+inputs/
+outputs/
+cache/
+cache-before-install.txt
+.env
+.env.*
+!.env.example
+.ipynb_checkpoints/
+*.review.json
+*.lock.local.json
+*.log
+*.pt
+*.pth
+*.safetensors
+*.npz
+*.blend
+.pytest_cache/
+dist/
+node_modules/
+
+# Credentials and local connection settings
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+.netrc
+.pypirc
+credentials.json
+secrets.json
+*.local.json
