@@ -77,6 +77,10 @@ def run(config_path, image_path, output_dir, mask_path=None, models_lock=None):
                 torch.cuda.empty_cache()
         write_json(output / "camera.json", {**camera, "export_transform": EXPORT_TRANSFORM.tolist(),
                                            "note": "Camera in upstream coordinates; apply export transform when rendering GLB."})
+        if cfg.get("bumper_constraint"):
+            from .geometry_constraint import FrontPartConstraint
+            pipeline.support_constraint = FrontPartConstraint(
+                output / "input_mask.png", camera, cfg["bumper_constraint"])
         for name in ("get_proj_cond_ss", "sample_sparse_structure", "get_proj_cond_shape",
                      "sample_tex_slat", "decode_latent"):
             if hasattr(pipeline, name):

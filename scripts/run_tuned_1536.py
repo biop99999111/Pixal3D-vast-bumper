@@ -18,6 +18,10 @@ def main():
     parser.add_argument("--models-lock", default="cache/models/models.lock.json")
     parser.add_argument("--output", default="outputs/bumper_1536_sparse_001")
     parser.add_argument("--chunk-size", type=int, default=8192)
+    parser.add_argument("--bumper-only", action="store_true",
+                        help="Experimental silhouette + front-depth support constraint")
+    parser.add_argument("--depth-min", type=float, default=0.15)
+    parser.add_argument("--depth-max", type=float, default=0.5)
     args = parser.parse_args()
     previous = read_json(args.previous)
     if digest(args.image) != previous["input_sha256"]:
@@ -26,15 +30,39 @@ def main():
     cfg = dict(previous["config"])
     cfg.update(resolution=1536, low_vram=False,
                projection_chunk_size=args.chunk_size, require_requested_resolution=True)
-    if cfg["background_mode"] == "provided_mask" and not args.mask:
+    reusable_mask = None
+    if args.bumper_only:
+        cfg["background_mode"] = "provided_mask"
+        cfg["bumper_constraint"] = {"depth_range": [args.depth_min, args.depth_max],
+                                    "silhouette_margin_pixels": 3}
+        if not args.mask:
+            # Only the inspected, isolated example bumper is eligible for automatic reuse.
+            if previous["input_sha256"] != "34832200ed35093270c59674e2bf4ca690dd4f07515e890136ec8c8b0ef7f8a5":
+                raise ValueError("For another image, supply a bumper-only mask with --mask")
+            from PIL import Image
+            foreground = Image.open(Path(args.previous).parent / "foreground_rgba.png")
+            if foreground.mode != "RGBA":
+                raise ValueError("Previous foreground must have an alpha channel")
+            reusable_mask = foreground.getchannel("A")
+            if reusable_mask.size != Image.open(args.image).size:
+                raise ValueError("Previous mask dimensions differ; supply an original-size --mask")
+    if cfg["background_mode"] == "provided_mask" and not args.mask and reusable_mask is None:
         raise ValueError("Previous run requires --mask")
     if args.chunk_size < 1:
         raise ValueError("--chunk-size must be positive")
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=False)
+    if reusable_mask is not None:
+        args.mask = str(output / "bumper_mask_original.png")
+        reusable_mask.save(args.mask)
     config_path = output / "config.json"
     write_json(config_path, cfg)
     checked_config(config_path, "inference")
+    if args.bumper_only:
+        from bumper_synth.preprocess import prepare
+        prepare(args.image, output / "input_preview", mode="provided_mask",
+                mask_path=args.mask, padding=cfg["padding"])
+        print(f"[Bumper input] {output / 'input_preview/model_input.png'}", flush=True)
     command = [sys.executable, "-u", "-m", "bumper_synth", "infer",
                "--config", str(config_path), "--image", str(Path(args.image).resolve()),
                "--models-lock", str(Path(args.models_lock).resolve()), "--output", str(output)]

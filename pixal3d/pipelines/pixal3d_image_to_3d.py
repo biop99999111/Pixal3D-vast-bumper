@@ -689,6 +689,8 @@ class Pixal3DImageTo3DPipeline(Pipeline):
             cond_ss, ss_res,
             num_samples, sparse_structure_sampler_params
         )
+        if getattr(self, "support_constraint", None) is not None:
+            coords = self.support_constraint(coords, ss_res, "sparse_structure")
         del cond_ss
         torch.cuda.empty_cache()
 
@@ -724,6 +726,8 @@ class Pixal3DImageTo3DPipeline(Pipeline):
                 ((hr_coords[:, 1:] + 0.5) / lr_resolution * (grid_res - 1)).round().int(),
             ], dim=1)
             hr_coords_unique = quant_coords.unique(dim=0)
+            if getattr(self, "support_constraint", None) is not None:
+                hr_coords_unique = self.support_constraint(hr_coords_unique, grid_res, "shape_hr")
             num_tokens = hr_coords_unique.shape[0]
             if num_tokens < max_num_tokens or actual_hr_resolution == 1024:
                 break

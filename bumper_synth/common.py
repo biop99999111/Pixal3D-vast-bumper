@@ -63,6 +63,16 @@ def checked_config(path, kind):
             raise ValueError("projection_chunk_size must be a positive integer")
         if not isinstance(cfg.get("require_requested_resolution", False), bool):
             raise ValueError("require_requested_resolution must be a boolean")
+        if cfg.get("bumper_constraint"):
+            constraint = cfg["bumper_constraint"]
+            if cfg["background_mode"] != "provided_mask":
+                raise ValueError("bumper_constraint requires provided_mask mode")
+            depth = constraint.get("depth_range", [])
+            if len(depth) != 2 or not -.5 <= depth[0] < depth[1] <= .5:
+                raise ValueError("depth_range must be increasing and within [-0.5, 0.5]")
+            margin = constraint.get("silhouette_margin_pixels", 3)
+            if type(margin) is not int or not 0 <= margin <= 32:
+                raise ValueError("silhouette_margin_pixels must be an integer from 0 to 32")
         for stage in ("ss", "shape", "texture"):
             if not 1 <= cfg["samplers"][stage]["steps"] <= 200:
                 raise ValueError("steps must be between 1 and 200")
