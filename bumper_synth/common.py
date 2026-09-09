@@ -58,6 +58,11 @@ def checked_config(path, kind):
             raise ValueError("background_mode must be auto or provided_mask")
         if not isinstance(cfg["low_vram"], bool):
             raise ValueError("low_vram must be a boolean")
+        chunk = cfg.get("projection_chunk_size", 8192)
+        if type(chunk) is not int or chunk < 1:
+            raise ValueError("projection_chunk_size must be a positive integer")
+        if not isinstance(cfg.get("require_requested_resolution", False), bool):
+            raise ValueError("require_requested_resolution must be a boolean")
         for stage in ("ss", "shape", "texture"):
             if not 1 <= cfg["samplers"][stage]["steps"] <= 200:
                 raise ValueError("steps must be between 1 and 200")
