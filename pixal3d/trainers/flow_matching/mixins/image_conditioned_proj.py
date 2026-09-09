@@ -184,7 +184,9 @@ class ProjGrid(nn.Module):
         distance: torch.Tensor,
         mesh_scale: torch.Tensor,
         transform_matrix: Optional[torch.Tensor] = None,
-        BHWC: bool = True
+        BHWC: bool = True,
+        point_indices: Optional[torch.Tensor] = None,
+        chunk_size: int = 8192,
     ) -> torch.Tensor:
         """
         Project 3D grid points to image and sample features.
@@ -205,7 +207,16 @@ class ProjGrid(nn.Module):
         else:
             B, C, H, W = features_map.shape
             
-        grid_points = self.grid_points
+        if point_indices is not None:
+            if chunk_size < 1:
+                raise ValueError("projection chunk_size must be positive")
+            if point_indices.numel() > chunk_size:
+                return torch.cat([
+                    self.forward(features_map, camera_angle_x, distance, mesh_scale,
+                                 transform_matrix, BHWC, part, chunk_size)
+                    for part in point_indices.split(chunk_size)
+                ], dim=1)
+        grid_points = self.grid_points if point_indices is None else self.grid_points[point_indices]
         grid_points = grid_points.expand(B, -1, -1)
         grid_points = grid_points / mesh_scale.unsqueeze(-1).unsqueeze(-1) / 2  # Scale alignment
         assert transform_matrix is None, "transform_matrix is not None"
@@ -566,6 +577,8 @@ class DinoV3ProjFeatureExtractor(nn.Module):
         distance: Optional[torch.Tensor] = None,
         mesh_scale: Optional[torch.Tensor] = None,
         transform_matrix: Optional[torch.Tensor] = None,
+        point_indices: Optional[torch.Tensor] = None,
+        projection_chunk_size: int = 8192,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Extract view-aligned features from the image.
@@ -628,7 +641,8 @@ class DinoV3ProjFeatureExtractor(nn.Module):
                 camera_angle_x, 
                 distance, 
                 mesh_scale,
-                transform_matrix
+                transform_matrix,
+                point_indices=point_indices, chunk_size=projection_chunk_size,
             )  # [B, grid_res³, D]
             
             # --- High-resolution branch (NAF): upsample then sample ---
@@ -647,7 +661,8 @@ class DinoV3ProjFeatureExtractor(nn.Module):
                     distance,
                     mesh_scale,
                     transform_matrix,
-                    BHWC=False  # hr_features is [B, C, H', W']
+                    BHWC=False,  # hr_features is [B, C, H', W']
+                    point_indices=point_indices, chunk_size=projection_chunk_size,
                 )  # [B, grid_res³, D]
                 
                 # Concatenate lr and hr: [B, grid_res³, D*2]

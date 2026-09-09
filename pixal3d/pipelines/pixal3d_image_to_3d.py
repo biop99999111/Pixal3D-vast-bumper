@@ -273,16 +273,18 @@ class Pixal3DImageTo3DPipeline(Pipeline):
         cam_angle = torch.tensor([camera_angle_x], device=device)
         dist_tensor = torch.tensor([distance], device=device)
         scale_tensor = torch.tensor([mesh_scale], device=device)
+        # Match dense [B, X, Y, Z, C] indexing without materializing R^3 features.
+        if len(image) != 1 or torch.any(coords[:, 0] != 0):
+            raise ValueError("Sparse single-view projection requires batch size 1")
+        grid_res = image_cond_model.grid_resolution
+        xyz = coords[:, 1:].long()
+        point_indices = (xyz[:, 0] * grid_res + xyz[:, 1]) * grid_res + xyz[:, 2]
         z_global, z_proj = image_cond_model(
             image, camera_angle_x=cam_angle, distance=dist_tensor, mesh_scale=scale_tensor,
+            point_indices=point_indices,
+            projection_chunk_size=getattr(self, "projection_chunk_size", 8192),
         )
-        grid_res = image_cond_model.grid_resolution
-        z_proj_grid = z_proj.reshape(B, grid_res, grid_res, grid_res, -1)
-        batch_indices = coords[:, 0].long()
-        x_coords = coords[:, 1].long()
-        y_coords = coords[:, 2].long()
-        z_coords = coords[:, 3].long()
-        z_proj_sparse = z_proj_grid[batch_indices, x_coords, y_coords, z_coords]
+        z_proj_sparse = z_proj[0]
         z_proj_st = SparseTensor(feats=z_proj_sparse, coords=coords)
 
         if grid_resolution_override is not None and grid_resolution_override != orig_grid_res:
@@ -687,6 +689,8 @@ class Pixal3DImageTo3DPipeline(Pipeline):
             cond_ss, ss_res,
             num_samples, sparse_structure_sampler_params
         )
+        if getattr(self, "support_constraint", None) is not None:
+            coords = self.support_constraint(coords, ss_res, "sparse_structure")
         del cond_ss
         torch.cuda.empty_cache()
 
@@ -722,11 +726,19 @@ class Pixal3DImageTo3DPipeline(Pipeline):
                 ((hr_coords[:, 1:] + 0.5) / lr_resolution * (grid_res - 1)).round().int(),
             ], dim=1)
             hr_coords_unique = quant_coords.unique(dim=0)
+            if getattr(self, "support_constraint", None) is not None:
+                hr_coords_unique = self.support_constraint(hr_coords_unique, grid_res, "shape_hr")
             num_tokens = hr_coords_unique.shape[0]
             if num_tokens < max_num_tokens or actual_hr_resolution == 1024:
                 break
+            if getattr(self, "require_requested_resolution", False):
+                raise RuntimeError(
+                    f"Requested {hr_resolution} requires {num_tokens} tokens, exceeding "
+                    f"max_num_tokens={max_num_tokens}; refusing to lower resolution."
+                )
             actual_hr_resolution -= 128
 
+        print(f"[Resolution] requested={hr_resolution}, actual={actual_hr_resolution}, tokens={num_tokens}")
         actual_grid_res = actual_hr_resolution // 16
         del lr_slat, hr_coords, quant_coords
         torch.cuda.empty_cache()

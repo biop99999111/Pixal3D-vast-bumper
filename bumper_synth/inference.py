@@ -49,6 +49,8 @@ def run(config_path, image_path, output_dir, mask_path=None, models_lock=None):
         with recorder.stage("model_loading"):
             pipeline = upstream.init_pipeline(lock["paths"]["pixal"], low_vram=cfg["low_vram"],
                                                load_rembg=cfg["background_mode"] == "auto")
+            pipeline.projection_chunk_size = cfg.get("projection_chunk_size", 8192)
+            pipeline.require_requested_resolution = cfg.get("require_requested_resolution", False)
         with recorder.stage("preprocess"):
             remover = pipeline.rembg_model
             if remover is not None:
@@ -75,6 +77,10 @@ def run(config_path, image_path, output_dir, mask_path=None, models_lock=None):
                 torch.cuda.empty_cache()
         write_json(output / "camera.json", {**camera, "export_transform": EXPORT_TRANSFORM.tolist(),
                                            "note": "Camera in upstream coordinates; apply export transform when rendering GLB."})
+        if cfg.get("bumper_constraint"):
+            from .geometry_constraint import FrontPartConstraint
+            pipeline.support_constraint = FrontPartConstraint(
+                output / "input_mask.png", camera, cfg["bumper_constraint"])
         for name in ("get_proj_cond_ss", "sample_sparse_structure", "get_proj_cond_shape",
                      "sample_tex_slat", "decode_latent"):
             if hasattr(pipeline, name):
