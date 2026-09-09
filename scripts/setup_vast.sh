@@ -6,11 +6,17 @@ cd "$repo_dir"
 export MAX_JOBS="${MAX_JOBS:-4}"
 export NATTEN_N_WORKERS="${NATTEN_N_WORKERS:-4}"
 if [[ "${1:-}" == "--help" ]]; then
-  echo 'Usage: bash scripts/setup_vast.sh [--lightweight]'
+  echo 'Usage: bash scripts/setup_vast.sh [--lightweight|--resume-natten]'
+  echo '--resume-natten skips completed dependency builds and resumes at NATTEN.'
   echo 'Full setup requires Linux, git, a C++ compiler, nvcc and a CUDA-capable PyTorch/torchvision installation.'
   echo 'Use a CUDA 12.8+ development image for RTX 5090. Existing Torch is preserved.'
   exit 0
 fi
+case "${1:-}" in
+  ''|--lightweight|--resume-natten) ;;
+  *) echo "Unknown option: $1"; exit 2 ;;
+esac
+if [[ "${1:-}" != "--resume-natten" ]]; then
 python -m pip install -r requirements-vast.txt
 if [[ "${1:-}" == "--lightweight" ]]; then exit 0; fi
 command -v nvcc >/dev/null || { echo 'nvcc missing: select a CUDA development image, not runtime-only.'; exit 1; }
@@ -63,8 +69,16 @@ python -m pip install cache/build/nvdiffrast --no-build-isolation
 python -m pip install cache/build/cumesh --no-build-isolation
 python -m pip install cache/build/flexgemm --no-build-isolation
 python -m pip install cache/build/trellis2/o-voxel --no-build-isolation
-export NATTEN_CUDA_ARCH="${NATTEN_CUDA_ARCH:-$(python -c 'import torch; print("".join(map(str,torch.cuda.get_device_capability())))')}"
-python -m pip install natten==0.21.0 --no-build-isolation
+fi
+# Assignment must be separate from export so Python validation failures stop the shell.
+NATTEN_CUDA_ARCH="$(python scripts/natten_arch.py)"
+export NATTEN_CUDA_ARCH
+echo "Building NATTEN with compute capability $NATTEN_CUDA_ARCH"
+mkdir -p cache/build outputs/setup
+if [[ -f cache/build/torch-constraints.txt ]]; then
+  export PIP_CONSTRAINT="$repo_dir/cache/build/torch-constraints.txt"
+fi
+python -m pip install natten==0.21.0 --no-build-isolation --no-deps --verbose 2>&1 | tee outputs/setup/natten-build.log
 python -m pip install 'https://github.com/LDYang694/Storages/releases/download/20260430/utils3d-0.0.2-py3-none-any.whl'
 python -m pip check
 python -m ipykernel install --user --name pixal3d-vast --display-name 'Pixal3D Vast'

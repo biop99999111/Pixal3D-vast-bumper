@@ -1,5 +1,21 @@
 # Vast.ai Jupyter 시작 가이드
 
+## NATTEN 설치 중 compute_1200 오류가 난 경우
+
+이전 스크립트에서 compute capability `(12, 0)`을 `120`으로 전달하는 오류가 있었다.
+NATTEN은 점이 있는 `12.0`을 요구하며, `120`을 전달하면 `compute_1200`으로 변환한다.
+이 오류는 스크립트에서 수정했고, 잘못된 환경변수도 빌드 전에 검증한다.
+
+이미 NATTEN 이전 의존성 설치가 끝난 서버에서는 저장소 루트에서 다음 명령으로 재개한다.
+
+```bash
+git pull --ff-only
+NATTEN_CUDA_ARCH=12.0 bash scripts/setup_vast.sh --resume-natten
+```
+
+새 로그는 `outputs/setup/natten-build.log`에 저장된다. 이 수정은 아키텍처 표기 오류를 해결하며,
+이후 실제 컴파일·CUDA 연산 성공 여부는 해당 서버에서 확인한다.
+
 ## 5090 고품질 첫 실행
 
 노트북의 손상 렌더 단계는 `configs/vast/render_high_quality.json`을 사용한다.
