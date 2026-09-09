@@ -4,6 +4,7 @@
 > [시작 가이드](docs/VAST_QUICKSTART.ko.md) · [Jupyter 작업 노트북](notebooks/workspace.ipynb) · [공개 전 점검 결과](docs/PUBLIC_REVIEW.ko.md)
 >
 > 공개 저장소를 Vast.ai Jupyter에서 clone한 뒤 `bash scripts/setup_vast.sh`로 준비합니다.
+> 일반 Linux GPU 서버에서는 [Dockerfile + Compose 가이드](docs/DOCKER.ko.md)를 사용합니다. 이미지 빌드·GPU 추론 검증 상태는 가이드에 기록합니다.
 > 예제 범퍼 사진: [bumper.jpg](assets/images/bumper.jpg). 노트북에서 업로드 없이 사용할 수 있습니다.
 >
 > 기본 Pixal3D 모델이 범퍼만 생성하는지는 입력별 검수가 필요합니다. 아래는 원본 프로젝트 설명입니다.

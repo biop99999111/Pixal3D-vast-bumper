@@ -6,22 +6,45 @@ cd "$repo_dir"
 export MAX_JOBS="${MAX_JOBS:-4}"
 export NATTEN_N_WORKERS="${NATTEN_N_WORKERS:-4}"
 if [[ "${1:-}" == "--help" ]]; then
-  echo 'Usage: bash scripts/setup_vast.sh [--lightweight|--resume-natten]'
+  echo 'Usage: bash scripts/setup_vast.sh [--lightweight|--resume-natten|--build-only]'
+  echo '--build-only compiles without a GPU; requires explicit TORCH_CUDA_ARCH_LIST and NATTEN_CUDA_ARCH.'
   echo '--resume-natten skips completed dependency builds and resumes at NATTEN.'
   echo 'Full setup requires Linux, git, a C++ compiler, nvcc and a CUDA-capable PyTorch/torchvision installation.'
   echo 'Use a CUDA 12.8+ development image for RTX 5090. Existing Torch is preserved.'
   exit 0
 fi
 case "${1:-}" in
-  ''|--lightweight|--resume-natten) ;;
+  ''|--lightweight|--resume-natten|--build-only) ;;
   *) echo "Unknown option: $1"; exit 2 ;;
 esac
+export PIXAL_BUILD_ONLY=0
+if [[ "${1:-}" == "--build-only" ]]; then
+  : "${TORCH_CUDA_ARCH_LIST:?Set TORCH_CUDA_ARCH_LIST for image builds}"
+  : "${NATTEN_CUDA_ARCH:?Set NATTEN_CUDA_ARCH for image builds}"
+  export PIXAL_BUILD_ONLY=1
+  python scripts/natten_arch.py >/dev/null
+fi
+# Protect the existing CUDA Torch stack during every dependency install.
+if [[ "${1:-}" != "--lightweight" ]]; then
+mkdir -p cache/build
+python - <<'PY'
+from importlib.metadata import version
+from pathlib import Path
+Path('cache/build/torch-constraints.txt').write_text(
+    f'torch=={version("torch")}\ntorchvision=={version("torchvision")}\n')
+PY
+export PIP_CONSTRAINT="$repo_dir/cache/build/torch-constraints.txt"
+fi
 if [[ "${1:-}" != "--resume-natten" ]]; then
 python -m pip install -r requirements-vast.txt
 if [[ "${1:-}" == "--lightweight" ]]; then exit 0; fi
 command -v nvcc >/dev/null || { echo 'nvcc missing: select a CUDA development image, not runtime-only.'; exit 1; }
 python - <<'PY'
+import os
 import torch, torchvision
+if os.environ['PIXAL_BUILD_ONLY'] == '1':
+    print('Image build: keeping Torch', torch.__version__, 'CUDA', torch.version.cuda)
+    raise SystemExit(0)
 assert torch.cuda.is_available(), 'CUDA is unavailable'
 major, minor = torch.cuda.get_device_capability()
 runtime = tuple(map(int, torch.version.cuda.split('.')[:2]))
@@ -90,5 +113,9 @@ refs={p.name:subprocess.check_output(['git','-C',str(p),'rev-parse','HEAD'],text
       for p in Path('cache/build').iterdir() if (p/'.git').exists()}
 Path('cache/build-refs.json').write_text(json.dumps(refs,indent=2))
 PY
-ATTN_BACKEND=sdpa python scripts/check_environment.py --gpu-smoke
-echo 'Setup complete. Install Blender separately, then open notebooks/workspace.ipynb.'
+if [[ "$PIXAL_BUILD_ONLY" == 1 ]]; then
+  echo 'Dependencies built. Run check_environment.py --gpu-smoke on the GPU host.'
+else
+  ATTN_BACKEND=sdpa python scripts/check_environment.py --gpu-smoke
+  echo 'Setup complete. Install Blender separately, then open notebooks/workspace.ipynb.'
+fi

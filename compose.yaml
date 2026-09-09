@@ -1,0 +1,28 @@
+services:
+  pixal3d:
+    image: ${PIXAL_IMAGE:-pixal3d:torch2.11-cu128-sm120}
+    platform: linux/amd64
+    build:
+      context: .
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-pytorch/pytorch:2.11.0-cuda12.8-cudnn9-devel}
+        CUDA_ARCH_LIST: ${CUDA_ARCH_LIST:-12.0}
+        BUILD_JOBS: ${BUILD_JOBS:-4}
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    init: true
+    working_dir: /app
+    shm_size: "8gb"
+    ports:
+      - "127.0.0.1:${JUPYTER_PORT:-8888}:8888"
+    volumes:
+      - ./inputs:/app/inputs
+      - ./outputs:/app/outputs
+      - ./cache:/app/cache
+      - ./notebooks:/app/notebooks
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${GPU_DEVICE_ID:-0}"]
+              capabilities: [gpu]

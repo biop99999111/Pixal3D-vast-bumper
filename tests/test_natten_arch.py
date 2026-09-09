@@ -1,4 +1,8 @@
 import pytest
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 from scripts.natten_arch import format_arch
 
@@ -19,3 +23,13 @@ def test_invalid_inherited_override_stops_before_compilation(bad):
 
 def test_explicit_multi_gpu_override():
     assert format_arch((12,0), "8.9;12.0") == "8.9;12.0"
+
+
+def test_image_build_override_needs_no_torch_or_gpu(tmp_path):
+    # Fail immediately if the CLI tries to import Torch during an explicit build.
+    (tmp_path / "torch.py").write_text("raise RuntimeError('No GPU discovery in image builds')")
+    script = Path(__file__).resolve().parents[1] / "scripts" / "natten_arch.py"
+    env = dict(os.environ, NATTEN_CUDA_ARCH="8.9;12.0", PYTHONPATH=str(tmp_path))
+    result = subprocess.run([sys.executable, str(script)], env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "8.9;12.0"

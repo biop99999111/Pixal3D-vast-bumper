@@ -14,5 +14,9 @@ def format_arch(capability, override=None):
 
 
 if __name__ == "__main__":
-    import torch
-    print(format_arch(torch.cuda.get_device_capability(), os.getenv("NATTEN_CUDA_ARCH")))
+    override = os.getenv("NATTEN_CUDA_ARCH")
+    if override:
+        print(format_arch(None, override))
+    else:
+        import torch
+        print(format_arch(torch.cuda.get_device_capability()))

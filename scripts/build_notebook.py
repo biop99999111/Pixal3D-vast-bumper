@@ -8,8 +8,9 @@ md, code = nbf.v4.new_markdown_cell, nbf.v4.new_code_cell
 nb.cells = [
 md("""# 범퍼 손상 합성데이터 — Vast.ai 작업 공간
 
-GitHub 저장소를 Jupyter 터미널에서 clone한 뒤 저장소 루트에서 `bash scripts/setup_vast.sh`를 실행하세요.
-커널을 **Pixal3D Vast**로 선택합니다. GPU 추론은 Linux Vast 서버에서, 렌더링은 설치된 Blender에서 실행합니다.
+Vast.ai 직접 설치는 저장소 루트에서 `bash scripts/setup_vast.sh`를 실행하고 **Pixal3D Vast** 커널을 선택합니다.
+Docker Compose 환경은 이미 의존성이 설치되어 있으므로 설치 셀을 반복하지 않고 **Pixal3D GPU** 커널을 선택합니다.
+일반 Linux 실행은 `docs/DOCKER.ko.md`를 참고하세요. 렌더링 단계에는 별도로 설치된 Blender가 필요합니다.
 환경 준비만으로 범퍼 단독 생성·실제 손상 검출 성능이 보장되지는 않습니다. 각 단계의 미리보기를 검수하세요.
 """),
 code("""from pathlib import Path
